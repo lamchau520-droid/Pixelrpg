@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Bắt Quái</title>
+<style>
+  body { margin:0; background:#222; color:white; font-family:sans-serif; text-align:center; }
+  canvas { background:#3cb371; display:block; margin:auto; border:3px solid white; }
+  #ui { margin-top:10px; }
+  button { padding:10px; margin:5px; font-size:16px; }
+</style>
+</head>
+<body>
+
+<h2>🌿 Game Bắt Quái Thú</h2>
+<canvas id="game" width="300" height="300"></canvas>
+
+<div id="ui"></div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = { x:140, y:140, size:20 };
+let inBattle = false;
+let playerTeam = [];
+
+let wildMonster = null;
+
+const monsters = [
+  { name:"Flamio", hp:30, atk:6, color:"red" },
+  { name:"Leafy", hp:28, atk:5, color:"lime" },
+  { name:"Aquos", hp:32, atk:4, color:"cyan" }
+];
+
+function drawMap(){
+  ctx.fillStyle="#3cb371";
+  ctx.fillRect(0,0,300,300);
+
+  // bụi cỏ
+  ctx.fillStyle="#2e8b57";
+  ctx.fillRect(80,80,140,140);
+
+  // người chơi
+  ctx.fillStyle="yellow";
+  ctx.fillRect(player.x, player.y, player.size, player.size);
+}
+
+function randomEncounter(){
+  if(player.x>80 && player.x<200 && player.y>80 && player.y<200){
+    if(Math.random() < 0.02){
+      startBattle();
+    }
+  }
+}
+
+function startBattle(){
+  inBattle = true;
+  wildMonster = JSON.parse(JSON.stringify(
+    monsters[Math.floor(Math.random()*monsters.length)]
+  ));
+  showBattleUI();
+}
+
+function showBattleUI(){
+  document.getElementById("ui").innerHTML = `
+    <h3>⚔️ Gặp ${wildMonster.name}</h3>
+    HP: ${wildMonster.hp}<br>
+    <button onclick="attack()">Đánh</button>
+    <button onclick="catchMonster()">Bắt</button>
+    <button onclick="run()">Chạy</button>
+  `;
+}
+
+function attack(){
+  let dmg = Math.floor(Math.random()*8)+3;
+  wildMonster.hp -= dmg;
+  if(wildMonster.hp <= 0){
+    alert("Bạn đã hạ quái!");
+    endBattle();
+  } else {
+    alert("Bạn gây " + dmg + " sát thương!");
+    showBattleUI();
+  }
+}
+
+function catchMonster(){
+  let chance = wildMonster.hp < 15 ? 0.7 : 0.3;
+  if(Math.random() < chance){
+    alert("🎉 Bắt thành công " + wildMonster.name);
+    playerTeam.push(wildMonster);
+    endBattle();
+  } else {
+    alert("Bắt thất bại!");
+  }
+}
+
+function run(){
+  endBattle();
+}
+
+function endBattle(){
+  inBattle = false;
+  document.getElementById("ui").innerHTML = `
+    <h3>Đội của bạn:</h3>
+    ${playerTeam.map(m=>m.name).join(", ") || "Chưa có quái"}
+  `;
+}
+
+document.addEventListener("keydown", e=>{
+  if(inBattle) return;
+  if(e.key=="ArrowUp") player.y -= 10;
+  if(e.key=="ArrowDown") player.y += 10;
+  if(e.key=="ArrowLeft") player.x -= 10;
+  if(e.key=="ArrowRight") player.x += 10;
+});
+
+function gameLoop(){
+  drawMap();
+  if(!inBattle) randomEncounter();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
